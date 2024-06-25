@@ -13,10 +13,13 @@ previous_key=''
 keys_file=/tmp/bubbly_keys
 
 parse_keys() {
-	read -r line
+	# read -r line
 
-	key_code=$(echo "$line" | awk -F ' ' '/key press/ {print $NF}')
+	# key_code=$(echo "$line" | awk -F ' ' '/key press/ {print $NF}')
+  key_code=$1
 	key=$(echo "$keycodes_list" | awk -v keycode="$key_code" '$1 == keycode {print $2}')
+
+  echo "parse_keys 1: $key"
 
 	# shorten some key names
 	case $key in
@@ -31,7 +34,7 @@ parse_keys() {
 		# handle symbols
 		case $key in
 		1) key='!' ;; 2) key='@' ;; 3) key='#' ;; 4) key='$' ;;
-		5) key='%' ;; 7) key='&' ;; 9) key='(' ;; 0) key=')' ;; /) key='?' ;;
+		5) key='%' ;; 7) key='&' ;; 9) key='(' ;; 2) key=')' ;; /) key='?' ;;
 
 		# capitalize
 		[a-z]) key=$(echo "$key" | tr '[:lower:]' '[:upper:]') ;;
@@ -70,6 +73,7 @@ parse_keys() {
 		done
 
 		result="(box :spacing 10 :style '$gradient' :class 'keybox' :space-evenly false $key_widgets_list )"
+    echo "$result"
 		eww -c "$basedir/keystrokes" update keys="$result"
 
 		echo -n "$(date '+%s')" >/tmp/bubbly_chat_timeout
@@ -79,8 +83,11 @@ parse_keys() {
 }
 
 device=$(xinput --list --long | grep XIKeyClass | head -n 1 | grep -E -o '[0-9]+')
+echo "1: $device"
+# device=18
+# xinput test "$device" | while parse_keys; do :; done &
 
-xinput test "$device" | while parse_keys; do :; done &
+xinput test-xi2 --root 3 | gawk '/RawKeyRelease/ {getline; getline; print $2; fflush()}' | while read -r key; do parse_keys "$key"; done &
 
 # if the user doesnt type for 2 seconds then hide eww widget
 check_keypress_timeout() {
@@ -90,6 +97,7 @@ check_keypress_timeout() {
 		time_diff=$((timenow - timeout))
 
 		if [ "$time_diff" -ge 1 ]; then
+      echo "2: $time_diff"
 			eww -c "$basedir/keystrokes" update keys=" "
 			eww -c "$basedir/keystrokes" reload
 			echo -n "" >$keys_file
