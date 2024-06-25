@@ -5,7 +5,9 @@
 )
 
 (defwindow keystrokes
+           :monitor 1
            :geometry (geometry :y "-10%"
+                               :width "25%"
                                :anchor "bottom center")
            :wm-ignore true
 (key_list))
