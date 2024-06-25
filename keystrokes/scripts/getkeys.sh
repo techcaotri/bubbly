@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/bash
 
 basedir="$HOME/.local/share/bubbly"
 
@@ -12,45 +12,106 @@ previous_key=''
 
 keys_file=/tmp/bubbly_keys
 
+# This script retrieves the shifted character for a given key using xmodmap
+
+# Function to get shifted character for a given key
+get_shifted_character() {
+	local key="$1"
+	# Retrieve the line from xmodmap output that contains the unshifted key
+	local line=$(xmodmap -pke | grep -E " = $key " | head -n 1)
+	if [[ -z "$line" ]]; then
+		echo "No key mapping found for '$key'"
+		return 1
+	fi
+
+	# Split the line to get all keysyms assigned to the keycode
+	local keysyms=($line)
+	# Shifted character is typically at the 3rd position in the keysyms array
+	local shifted_char="${keysyms[4]}" # indices start at 0, so [4] is the 5th element
+
+	echo "$shifted_char"
+}
+
 parse_keys() {
-	# read -r line
 
-	# key_code=$(echo "$line" | awk -F ' ' '/key press/ {print $NF}')
-  key_code=$1
-	key=$(echo "$keycodes_list" | awk -v keycode="$key_code" '$1 == keycode {print $2}')
+	IFS=' ' read -r -a modifiers <<<"$2"
+	echo "parse_keys - modifiers=${modifiers[*]}"
+	key="$1"
+	echo "parse_keys - key: $key"
 
-  echo "parse_keys 1: $key"
+	# handle modifiers
+	# loop through the modifiers array and shorten the modifier names
+	for i in "${!modifiers[@]}"; do
+		case ${modifiers[i]} in
+		Shift | Shift_L | Shift_R) modifiers[$i]="Sft" ;;
+		Alt_L | Alt_R) modifiers[$i]="Alt" ;;
+		Super_L | Super_R) modifiers[$i]="Super" ;;
+		Control | Control_L | Control_RL | Control_R) modifiers[$i]="Ctrl" ;;
+		esac
+	done
+  
+  echo "parse_keys - after shortening modifiers=${modifiers[*]}"
+
+	# If modifiers array has "Shift" then capitalize the key, and empty the modifier
+	if [[ ${#modifiers[@]} -eq 1 ]] && [[ "${modifiers[0]}" == "Sft" ]]; then
+		key=$(get_shifted_character "$key")
+		modifiers=()
+	fi
+
+  echo "parse_keys - after handling Shift key=$key"
 
 	# shorten some key names
 	case $key in
-	comma) key="," ;; period) key="." ;; slash) key="/" ;;
+	comma) key="," ;; period) key="." ;;
+	grave) key="\`" ;; asciitilde) key="~" ;;
+	less) key="<" ;; greater) key=">" ;; question) key="?" ;;
+	slash) key="/" ;; backslash) key="\\" ;; bar) key="|" ;;
 	minus) key="-" ;; BackSpace) key="" ;; Escape) key="Esc" ;;
-	bracketleft) key="[" ;; bracketright) key="]" ;; equal) key="=" ;;
-	Control_L | Control_RL) key="Ctrl" ;; apostrophe) key='"' ;;
-	semicolon) key=";" ;;
+	apostrophe) key="\'" ;; quotedbl) key='\"' ;;
+	braceleft) key="{" ;; braceright) key="}" ;;
+	bracketleft) key="[" ;; bracketright) key="]" ;;
+	colon) key=":" ;; semicolon) key=";" ;;
+	exclam) key="!" ;; at) key="@" ;; numbersign) key="#" ;;
+	dollar) key="$" ;; percent) key="%" ;; asciicircum) key="^" ;;
+	ampersand) key="&" ;; asterisk) key="*" ;;
+  parenleft) key="(" ;; parenright) key=")" ;;
+		# Do not show the modifiers
+	Shift_L | Shift_R) key="" ;;
+	Alt_L | Alt_R) key="" ;;
+	Super_L | Super_R) key="" ;;
+	Control_L | Control_RL | Control_R) key="" ;;
+	Tab) key="⇄" ;;
+	Return) key="↵" ;;
+	Delete) key="Del" ;;
+	Up) key="↑" ;;
+	Down) key="↓" ;;
+	Left) key="←" ;;
+	Right) key="→" ;;
 	esac
 
-	if [ "$previous_key" = "Shift_L" ]; then
-		# handle symbols
-		case $key in
-		1) key='!' ;; 2) key='@' ;; 3) key='#' ;; 4) key='$' ;;
-		5) key='%' ;; 7) key='&' ;; 9) key='(' ;; 2) key=')' ;; /) key='?' ;;
+  echo "parse_keys - after shortening key=$key"
 
-		# capitalize
-		[a-z]) key=$(echo "$key" | tr '[:lower:]' '[:upper:]') ;;
-		esac
+	# concatenate modifiers with key separated by '+' sign
+	if [[ ${#modifiers[@]} -gt 0 ]]; then
+		# Join all array elements with '+' and concatenate with key
+		key=$(
+			IFS='+'
+			echo "${modifiers[*]}+$key"
+		)
 	fi
 
-	if [ ${#key} -gt 0 ] && [ "$key" != "Shift_R" ] && [ "$key" != "Shift_L" ]; then
-		key=$(echo "$key" | sed 's/_.*//') # rm _txt suffix for some keys like alt_r -> alt etc
+	echo "parse_keys 1: $key"
+
+	if [ ${#key} -gt 0 ]; then
 		echo -n " $key" >>$keys_file
 		keys=$(cat $keys_file)
+		echo "keys: $keys"
 
-		# if [ $keys = "Ctrl Esc" ]; then
-		if [ "$keys" = " Ctrl Esc" ]; then
+		echo "previous_key: $previous_key"
+		if [[ "$key" = "Ctrl+Esc" ]] && [[ "$previous_key" = "Ctrl+Esc" ]]; then
 			eww -c "$basedir/bubbles" close bubbly
 			eww -c "$basedir/keystrokes" close keystrokes
-      eww -c "$basedir/selector" update mode=''
+			eww -c "$basedir/selector" update mode=''
 			killall getkeys.sh
 		fi
 
@@ -73,7 +134,7 @@ parse_keys() {
 		done
 
 		result="(box :spacing 10 :style '$gradient' :class 'keybox' :space-evenly false $key_widgets_list )"
-    echo "$result"
+		echo "$result"
 		eww -c "$basedir/keystrokes" update keys="$result"
 
 		echo -n "$(date '+%s')" >/tmp/bubbly_chat_timeout
@@ -82,12 +143,9 @@ parse_keys() {
 	previous_key=$key
 }
 
-device=$(xinput --list --long | grep XIKeyClass | head -n 1 | grep -E -o '[0-9]+')
-echo "1: $device"
-# device=18
-# xinput test "$device" | while parse_keys; do :; done &
-
-xinput test-xi2 --root 3 | gawk '/RawKeyRelease/ {getline; getline; print $2; fflush()}' | while read -r key; do parse_keys "$key"; done &
+"$basedir"/keystrokes/scripts/perl_get_keys.sh | while IFS=':' read -r key modifiers; do
+	parse_keys "$key" "$modifiers"
+done
 
 # if the user doesnt type for 2 seconds then hide eww widget
 check_keypress_timeout() {
@@ -97,7 +155,7 @@ check_keypress_timeout() {
 		time_diff=$((timenow - timeout))
 
 		if [ "$time_diff" -ge 1 ]; then
-      echo "2: $time_diff"
+			echo "2: $time_diff"
 			eww -c "$basedir/keystrokes" update keys=" "
 			eww -c "$basedir/keystrokes" reload
 			echo -n "" >$keys_file
