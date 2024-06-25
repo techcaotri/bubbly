@@ -115,6 +115,7 @@ parse_keys() {
 			killall getkeys.sh
 		fi
 
+    echo "keystrokes_limit: $keystrokes_limit"
 		key_widgets_list=""
 		recent_words=$(echo "$keys" | rev | cut -d' ' -f-"$keystrokes_limit" | rev) # get last 3 only
 		words_len=$(echo "$recent_words" | wc -w)
