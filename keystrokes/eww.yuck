@@ -5,7 +5,6 @@
 )
 
 (defwindow keystrokes
-           :monitor 1
            :geometry (geometry :y "-10%"
                                :width "40%"
                                :anchor "bottom center")

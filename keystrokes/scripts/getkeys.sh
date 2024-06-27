@@ -108,12 +108,20 @@ parse_keys() {
 		echo "keys: $keys"
 
 		echo "previous_key: $previous_key"
+    # Handle the case where the user presses Ctrl+Esc twice to close the widgets
 		if [[ "$key" = "Ctrl+Esc" ]] && [[ "$previous_key" = "Ctrl+Esc" ]]; then
 			eww -c "$basedir/bubbles" close bubbly
 			eww -c "$basedir/keystrokes" close keystrokes
 			eww -c "$basedir/selector" update mode=''
 			killall getkeys.sh
 		fi
+
+    # Update the monitor number for the keystrokes widget
+    if [[ "$key" = "Sft+Ctrl+Alt+"* ]]; then
+      cur_monitor=$(echo "$key" | cut -d'+' -f4)
+			eww -c "$basedir/keystrokes" close keystrokes
+      eww -c "$basedir/keystrokes" open keystrokes --screen "$cur_monitor"
+    fi
 
     echo "keystrokes_limit: $keystrokes_limit"
 		key_widgets_list=""
