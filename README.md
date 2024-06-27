@@ -6,6 +6,13 @@
  
 </div>
 
+# Notice
+Since the original project doesn't work with Ubuntu 22.04 at the moment. The following enhancements were made compared to the original versions:
+ - Use another method to get the keys instead of using 'xinput' with $device parameter since it's difficult to get the right keyboard device with BLE keyboard
+ - Shorten many keycodes: Shift -> Sft, Control -> Ctrl, Up -> '↑', etc.
+ - Press 'Ctrl+Esc' twice to terminate bubbly 
+ - Use 'Shift+Ctrl+Alt+<monitor_index>' as the shortkey to switch monitor for the keystrokes widget
+
 ## About 
 
 - Bubbly lets you create on-screen chat_bubble like widgets based on the keystrokes you type on the keyboard. It uses xinput to fetch the keys and puts them into an eww widget.
