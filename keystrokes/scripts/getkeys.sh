@@ -49,8 +49,8 @@ parse_keys() {
 		Control | Control_L | Control_RL | Control_R) modifiers[$i]="Ctrl" ;;
 		esac
 	done
-  
-  echo "parse_keys - after shortening modifiers=${modifiers[*]}"
+
+	echo "parse_keys - after shortening modifiers=${modifiers[*]}"
 
 	# If modifiers array has "Shift" then capitalize the key, and empty the modifier
 	if [[ ${#modifiers[@]} -eq 1 ]] && [[ "${modifiers[0]}" == "Sft" ]]; then
@@ -58,7 +58,7 @@ parse_keys() {
 		modifiers=()
 	fi
 
-  echo "parse_keys - after handling Shift key=$key"
+	echo "parse_keys - after handling Shift key=$key"
 
 	# shorten some key names
 	case $key in
@@ -74,7 +74,7 @@ parse_keys() {
 	exclam) key="!" ;; at) key="@" ;; numbersign) key="#" ;;
 	dollar) key="$" ;; percent) key="%" ;; asciicircum) key="^" ;;
 	ampersand) key="&" ;; asterisk) key="*" ;;
-  parenleft) key="(" ;; parenright) key=")" ;;
+	parenleft) key="(" ;; parenright) key=")" ;;
 		# Do not show the modifiers
 	Shift_L | Shift_R) key="" ;;
 	Alt_L | Alt_R) key="" ;;
@@ -89,7 +89,7 @@ parse_keys() {
 	Right) key="→" ;;
 	esac
 
-  echo "parse_keys - after shortening key=$key"
+	echo "parse_keys - after shortening key=$key"
 
 	# concatenate modifiers with key separated by '+' sign
 	if [[ ${#modifiers[@]} -gt 0 ]]; then
@@ -108,7 +108,7 @@ parse_keys() {
 		echo "keys: $keys"
 
 		echo "previous_key: $previous_key"
-    # Handle the case where the user presses Ctrl+Esc twice to close the widgets
+		# Handle the case where the user presses Ctrl+Esc twice to close the widgets
 		if [[ "$key" = "Ctrl+Esc" ]] && [[ "$previous_key" = "Ctrl+Esc" ]]; then
 			eww -c "$basedir/bubbles" close bubbly
 			eww -c "$basedir/keystrokes" close keystrokes
@@ -116,14 +116,16 @@ parse_keys() {
 			killall getkeys.sh
 		fi
 
-    # Update the monitor number for the keystrokes widget
-    if [[ "$key" = "Sft+Ctrl+Alt+"* ]]; then
-      cur_monitor=$(echo "$key" | cut -d'+' -f4)
-			eww -c "$basedir/keystrokes" close keystrokes
-      eww -c "$basedir/keystrokes" open keystrokes --screen "$cur_monitor"
-    fi
+		# Update the monitor number for the keystrokes widget
+		if [[ "$key" = "Sft+Ctrl+Alt+"* ]]; then
+			cur_monitor=$(echo "$key" | cut -d'+' -f4)
+			if [[ $cur_monitor =~ ^[0-9]+$ ]]; then
+				eww -c "$basedir/keystrokes" close keystrokes
+				eww -c "$basedir/keystrokes" open keystrokes --screen "$cur_monitor"
+			fi
+		fi
 
-    echo "keystrokes_limit: $keystrokes_limit"
+		echo "keystrokes_limit: $keystrokes_limit"
 		key_widgets_list=""
 		recent_words=$(echo "$keys" | rev | cut -d' ' -f-"$keystrokes_limit" | rev) # get last 3 only
 		words_len=$(echo "$recent_words" | wc -w)
@@ -138,11 +140,11 @@ parse_keys() {
 			fi
 
 			# active_style=""
-			key_widget="(label :class 'label' :style '$css' :text '$word')"
+			key_widget="(label :show-truncated false :class 'label' :style '$css' :text '$word')"
 			key_widgets_list=" $key_widgets_list $key_widget "
 		done
 
-		result="(box :spacing 10 :style '$gradient' :class 'keybox' :space-evenly false $key_widgets_list )"
+		result="(box :hexpand true :spacing 10 :style '$gradient' :class 'keybox' :space-evenly false $key_widgets_list )"
 		echo "$result"
 		eww -c "$basedir/keystrokes" update keys="$result"
 
