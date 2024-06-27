@@ -7,11 +7,11 @@
 </div>
 
 # Notice
-Since the original project doesn't work with Ubuntu 22.04 at the moment. The following enhancements were made compared to the original versions:
- - Use another method to get the keys instead of using 'xinput' with $device parameter since it's difficult to get the right keyboard device with BLE keyboard
- - Shorten many keycodes: Shift -> Sft, Control -> Ctrl, Up -> '↑', etc.
- - Press 'Ctrl+Esc' twice to terminate bubbly 
- - Use 'Shift+Ctrl+Alt+<monitor_index>' as the shortkey to switch monitor for the keystrokes widget
+The original project is currently incompatible with Ubuntu 22.04. To address this and improve functionality, the following enhancements have been implemented:
+- Replaced the 'xinput' method for key detection, as it struggles with identifying BLE keyboards accurately. An alternative approach has been adopted to retrieve keystrokes.
+- Abbreviated various keycodes for improved readability and efficiency (e.g., Shift -> Sft, Control -> Ctrl, Up -> '↑').
+- Implemented a new termination method: double-pressing 'Ctrl+Esc' now exits bubbly.
+- Added a monitor-switching feature for the keystrokes widget, accessible via 'Shift+Ctrl+Alt+<monitor_index>'.
 
 ## About 
 
