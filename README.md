@@ -12,6 +12,7 @@ The original project is currently incompatible with Ubuntu 22.04. To address thi
 - Abbreviated various keycodes for improved readability and efficiency (e.g., Shift -> Sft, Control -> Ctrl, Up -> '↑').
 - Implemented a new termination method: double-pressing 'Ctrl+Esc' now exits bubbly.
 - Added a monitor-switching feature for the keystrokes widget, accessible via 'Shift+Ctrl+Alt+<monitor_index>'.
+- Enhanced the label widget for each key to auto-expand, preventing text truncation
 
 ## About 
 
